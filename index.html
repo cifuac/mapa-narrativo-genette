@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Lámina interactiva con los componentes de la narración según Figuras III de Gérard Genette.">
+<title>Mapa narrativo de Genette</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500;600;700&display=swap">
+<style>
+/* Lámina 16:9 de 1600×900 escalada a la pantalla: plano imaginario arriba (eje narración → relato → historia), plano real abajo. Todo elemento abre una ficha con definición, tipos, ejemplos y relaciones. */
+:root{
+  --page:#E6EAF0;
+  --stage:#FFFFFF;
+  --ink:#14213A;
+  --ink-2:#4A5770;
+  --ink-3:#7E899D;
+  --line:#BFC8D6;
+  --imag:#F2F5FA;  --imag-dot:#D9E0EB;
+  --real:#F6F3EE;  --real-dot:#E5DED2;
+
+  --voz:#1F5FA6;    --voz-tint:#E5EEF8;   --voz-line:#B7CDE6;
+  --tiempo:#6B44B6; --tiempo-tint:#F0EAFA;
+  --modo:#0C7A70;   --modo-tint:#DFF2EF;
+  --real-c:#8A5A12; --real-tint:#F4E8D4;  --real-line:#DCC9A8;
+  --lazo:#2E7A48;   --lazo-tint:#E2F1E6;
+  --plano:#B23A2E;  --plano-tint:#FBEAE8;
+  --neutral-tint:#EDF0F5;
+
+  --serif:"Instrument Serif", Georgia, "Times New Roman", serif;
+  --sans:"Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--page)}
+body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left}
+button:focus-visible{outline:3px solid var(--c, var(--voz));outline-offset:3px}
+
+.viewport{
+  position:fixed;inset:0;
+  padding-top:max(14px, env(safe-area-inset-top, 0px));
+  padding-bottom:max(14px, env(safe-area-inset-bottom, 0px));
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+.stage{
+  position:absolute;left:50%;top:50%;
+  width:1600px;height:900px;
+  transform:translate(-50%,-50%) scale(var(--s,.5));
+  transform-origin:center center;
+  background:var(--stage);
+  border-radius:24px;
+  box-shadow:0 1px 2px rgba(20,33,58,.06), 0 30px 70px -20px rgba(20,33,58,.28);
+  overflow:hidden;
+}
+.el{position:absolute;z-index:2}
+.lines{position:absolute;inset:0;width:1600px;height:900px;pointer-events:none;z-index:1}
+.panel{position:absolute;border-radius:22px;z-index:0}
+.panel-imag{background-color:var(--imag);background-image:radial-gradient(var(--imag-dot) 1.1px, transparent 1.6px);background-size:22px 22px;border:1px solid #E1E7F0}
+.panel-real{background-color:var(--real);background-image:radial-gradient(var(--real-dot) 1.1px, transparent 1.6px);background-size:22px 22px;border:1px solid #ECE5DA}
+.glow{position:absolute;z-index:1;pointer-events:none;background:radial-gradient(closest-side, rgba(31,95,166,.17), rgba(31,95,166,0))}
+
+/* Encabezado */
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase}
+.title{font-family:var(--serif);font-weight:400;font-size:54px;line-height:1;letter-spacing:-.01em;margin:0;color:var(--ink)}
+.title em{font-style:italic;color:var(--voz)}
+.legend{display:flex;justify-content:flex-end;gap:8px}
+.legend button{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 14px;border-radius:999px;background:var(--stage);border:1px solid var(--line);font-size:14px;font-weight:600;color:var(--ink-2);transition:background .15s,border-color .15s}
+.legend button:hover{border-color:var(--c);background:var(--t)}
+.legend .sw{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.hint{display:flex;justify-content:flex-end;align-items:center;gap:8px;font-size:14px;color:var(--ink-3)}
+.hint svg{width:18px;height:18px;color:var(--voz)}
+
+/* Etiquetas de plano */
+.plano{display:grid;gap:1px;--c:var(--plano)}
+.plano b{font-size:12.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--plano)}
+.plano span{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink-3)}
+.plano:hover b{text-decoration:underline;text-underline-offset:3px}
+
+/* Nodos */
+.node{
+  display:flex;align-items:center;gap:14px;padding:0 20px;
+  border-radius:18px;background:var(--stage);
+  border:1.5px solid var(--voz-line);
+  box-shadow:0 1px 0 rgba(20,33,58,.04), 0 10px 24px -14px rgba(20,33,58,.35);
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s;
+  --c:var(--voz);
+}
+.node:hover{transform:translateY(-3px);border-color:var(--c);box-shadow:0 1px 0 rgba(20,33,58,.04), 0 18px 30px -16px rgba(20,33,58,.45)}
+.ic{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;flex:none;background:var(--voz-tint);color:var(--voz)}
+.ic svg{width:25px;height:25px}
+.nm{display:block;font-size:22px;font-weight:600;line-height:1.1;letter-spacing:-.005em}
+.sb{display:block;font-size:14px;color:var(--ink-3);margin-top:4px;line-height:1.2}
+.node.hero{background:var(--voz);border-color:var(--voz);color:#FFFFFF;box-shadow:0 1px 0 rgba(20,33,58,.04), 0 16px 34px -14px rgba(31,95,166,.6)}
+.node.hero .ic{background:rgba(255,255,255,.16);color:#FFFFFF}
+.node.hero .sb{color:rgba(255,255,255,.82)}
+.node.dark{background:var(--ink);border-color:var(--ink);color:#FFFFFF;border-radius:999px;padding:0 26px 0 12px;--c:var(--ink)}
+.node.dark .ic{background:rgba(255,255,255,.12);color:#FFFFFF;border-radius:999px;width:38px;height:38px}
+.node.dark .ic svg{width:21px;height:21px}
+.node.dark .nm{font-size:24px}
+.node.dark .sb{color:rgba(255,255,255,.7);margin-top:2px;font-size:13px}
+.node.ink{border-color:#C9D1DD;--c:var(--ink)}
+.node.ink .ic{background:var(--neutral-tint);color:var(--ink)}
+.node.real{border-color:var(--real-line);--c:var(--real-c)}
+.node.real .ic{background:var(--real-tint);color:var(--real-c);width:44px;height:44px;border-radius:13px}
+.node.real .nm{font-size:20px}
+
+.branch{display:grid;align-content:center;justify-items:center;gap:3px;text-align:center;border-radius:14px;background:var(--stage);border:1.5px solid var(--voz-line);box-shadow:0 8px 18px -14px rgba(20,33,58,.35);transition:transform .16s, border-color .16s;--c:var(--voz)}
+.branch:hover{transform:translateY(-2px);border-color:var(--voz)}
+.branch small{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+.branch b{font-size:15.5px;font-weight:700;color:var(--voz)}
+
+/* Tarjetas de categoría */
+.cat{background:var(--stage);border-radius:18px;box-shadow:0 10px 24px -16px rgba(20,33,58,.35)}
+.cat-voz{border:1.5px solid var(--voz);--c:var(--voz);--t:var(--voz-tint);padding:12px 16px;display:flex;flex-direction:column;gap:9px}
+.cat-tm{border:1.5px solid var(--line);display:grid;grid-template-columns:1fr 1fr}
+.half{padding:12px 16px;display:flex;flex-direction:column;gap:9px}
+/* La divisoria continúa el eje de la tríada: mismo color y misma x (800) que la línea del SVG. */
+.cat-tm::after{content:"";position:absolute;top:0;bottom:0;left:calc(50% - 1px);width:2px;background:#9AA6B8;pointer-events:none}
+.c-tiempo{--c:var(--tiempo);--t:var(--tiempo-tint)}
+.c-modo{--c:var(--modo);--t:var(--modo-tint)}
+.c-voz{--c:var(--voz);--t:var(--voz-tint)}
+.cat-head{display:flex;align-items:baseline;gap:10px;align-self:flex-start}
+.cat-name{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--c)}
+.cat-name svg{width:17px;height:17px;transform:translateY(2px)}
+.cat-q{font-family:var(--serif);font-style:italic;font-size:18px;color:var(--ink-2)}
+.cat-head:hover .cat-name{text-decoration:underline;text-underline-offset:3px}
+.chips{display:flex;flex-wrap:nowrap;gap:6px}
+.chip{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:999px;background:var(--t);color:var(--c);font-size:13.5px;font-weight:600;white-space:nowrap;transition:background .15s,color .15s}
+.chip:hover{background:var(--c);color:#FFFFFF}
+
+/* Tarjetas de apoyo */
+.aux{border-radius:16px;background:var(--stage);border:1px solid #DCE2EB;padding:12px 16px 13px;display:grid;gap:7px;align-content:center;box-shadow:0 8px 20px -16px rgba(20,33,58,.3);transition:border-color .15s, transform .16s;--c:var(--ink)}
+.aux:hover{border-color:var(--ink-3);transform:translateY(-2px)}
+.aux .k{font-size:11.5px;font-weight:700;letter-spacing:.16em;color:var(--ink-3);text-transform:uppercase}
+.rows{position:relative;display:grid;gap:5px}
+.rows::before{content:"";position:absolute;left:3px;top:9px;bottom:9px;width:1.5px;background:var(--line)}
+.rows .r{position:relative;display:flex;align-items:center;gap:9px;font-size:14px;color:var(--ink-3)}
+.rows .r b{color:var(--ink);font-weight:600}
+.rows .d{width:8px;height:8px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 2.5px var(--stage)}
+.vsrow{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.vsrow b{font-family:var(--serif);font-weight:400;font-size:19px;line-height:1.1}
+.vsrow small{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.vs-m b,.vs-m small{color:var(--modo)}
+.vs-v b,.vs-v small{color:var(--voz)}
+.neq{font-size:18px;line-height:.6;color:var(--plano);font-weight:700;padding-left:2px}
+
+.tag{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:32px;border-radius:999px;font-size:14px;font-weight:700;background:var(--stage);transition:background .15s}
+.tag-neq{border:1.5px solid var(--ink-3);color:var(--ink-2);--c:var(--ink-2)}
+.tag-neq:hover{background:var(--neutral-tint)}
+.tag-neq i{font-style:normal;font-size:19px;line-height:1;color:var(--plano)}
+.tag-lazo{border:1.5px dashed var(--lazo);color:var(--lazo);--c:var(--lazo)}
+.tag-lazo:hover{background:var(--lazo-tint)}
+.lbl{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink-3);text-align:center;pointer-events:none}
+.src{font-size:12.5px;color:var(--ink-3)}
+
+.is-active{outline:3px solid var(--c, var(--voz));outline-offset:4px}
+
+/* Ficha emergente */
+.pop{
+  position:fixed;z-index:50;left:0;top:0;
+  width:min(430px, calc(100vw - 24px));
+  max-height:calc(100vh - 24px);overflow:auto;overscroll-behavior:contain;
+  background:#FFFFFF;border-radius:18px;
+  box-shadow:0 0 0 1px rgba(20,33,58,.08), 0 30px 70px -16px rgba(20,33,58,.45);
+  font-family:var(--sans);color:var(--ink);
+  animation:popin .15s ease-out;
+}
+.pop:focus{outline:none}
+@keyframes popin{from{opacity:0;transform:translateY(5px) scale(.985)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.pop{animation:none}.node,.branch,.aux{transition:none}}
+.pop-h{position:relative;padding:18px 56px 15px 22px;background:var(--pt);border-radius:18px 18px 0 0}
+.pop-k{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--pc)}
+.pop-k::before{content:"";width:9px;height:9px;border-radius:3px;background:var(--pc)}
+.pop h3{margin:7px 0 0;font-family:var(--serif);font-weight:400;font-size:34px;line-height:1.02;letter-spacing:-.005em}
+.pop .q{margin:5px 0 0;font-family:var(--serif);font-style:italic;font-size:19px;line-height:1.2;color:var(--pc)}
+.pop-b{padding:16px 22px 4px;display:grid;gap:14px}
+.pop-b p{margin:0;font-size:15px;line-height:1.52;color:var(--ink-2)}
+.pop-b i{font-style:italic}
+.sl{font-size:11px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-3);margin:0 0 7px}
+.pop ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.pop li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 9px;font-size:14.5px;line-height:1.45;color:var(--ink-2)}
+.pop li::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--pc);margin-top:.55em}
+.pop li b{color:var(--ink);font-weight:700}
+.box{border-radius:12px;padding:11px 13px 12px}
+.box p{font-size:14.5px}
+.box-ex{background:#F4F6FA}
+.box-ojo{background:#FDF6F5;border:1.5px dashed #E4B9B3}
+.box-ojo .sl{color:var(--plano)}
+.formula{display:inline-block;font-family:var(--serif);font-size:22px;color:var(--pc);background:var(--pt);padding:4px 12px;border-radius:9px;margin-bottom:6px}
+.pop-f{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:14px 22px 18px;margin-top:12px;border-top:1px solid #E3E8EF}
+.pop-f .vt{font-size:12.5px;color:var(--ink-3);margin-right:2px}
+.go{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 11px;border-radius:999px;border:1px solid #D3DAE5;font-size:13px;font-weight:600;color:var(--ink-2);background:#FFFFFF;transition:border-color .15s, background .15s}
+.go:hover{border-color:var(--pc);background:var(--pt);color:var(--ink)}
+.go::after{content:"→";font-weight:500;color:var(--ink-3)}
+.ref{flex-basis:100%;margin-top:8px;font-size:12.5px;color:var(--ink-3)}
+.ref i{font-style:italic}
+.pop .x{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2);background:rgba(255,255,255,.7)}
+.pop .x:hover{background:#FFFFFF;color:var(--ink)}
+.pop .x svg{width:18px;height:18px}
+.tip{position:absolute;width:14px;height:14px;transform:rotate(45deg);z-index:-1}
+.pop[data-side="below"] .tip{top:-7px;background:var(--pt)}
+.pop[data-side="above"] .tip{bottom:-7px;background:#FFFFFF;box-shadow:1px 1px 0 rgba(20,33,58,.08)}
+.pop[data-side="side"] .tip{display:none}
+
+.rotate{position:fixed;left:50%;bottom:max(16px, env(safe-area-inset-bottom, 0px));transform:translateX(-50%);z-index:40;background:var(--ink);color:#FFFFFF;font-size:13.5px;padding:9px 16px;border-radius:999px;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div class="viewport">
+<div class="stage" id="stage">
+
+  <div class="panel panel-imag" style="left:40px;top:136px;width:1520px;height:520px"></div>
+  <div class="panel panel-real" style="left:40px;top:680px;width:1520px;height:184px"></div>
+  <div class="glow" style="left:560px;top:270px;width:480px;height:220px"></div>
+
+  <svg class="lines" viewBox="0 0 1600 900" aria-hidden="true">
+    <defs>
+      <marker id="a-ink" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="15" markerHeight="15" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.5 L11 6 L1 10.5 Z" fill="#14213A"/></marker>
+      <marker id="a-lazo" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="13" markerHeight="13" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.5 L11 6 L1 10.5 Z" fill="#2E7A48"/></marker>
+    </defs>
+    <path d="M800 214 V552" stroke="#9AA6B8" stroke-width="2" fill="none"/>
+    <path d="M660 187 H362 Q330 187 330 219 V334" stroke="#9AA6B8" stroke-width="2" fill="none"/>
+    <path d="M940 187 H1238 Q1270 187 1270 219 V334" stroke="#9AA6B8" stroke-width="2" fill="none"/>
+    <circle cx="330" cy="334" r="3.5" fill="#9AA6B8"/>
+    <circle cx="1270" cy="334" r="3.5" fill="#9AA6B8"/>
+    <path d="M457 380 H649" stroke="#14213A" stroke-width="3" fill="none" marker-end="url(#a-ink)"/>
+    <path d="M947 380 H1139" stroke="#14213A" stroke-width="3" fill="none" marker-end="url(#a-ink)"/>
+    <path d="M330 426 V438 Q330 446 322 446 H261 Q253 446 253 454 V466" stroke="#9AA6B8" stroke-width="1.8" fill="none"/>
+    <path d="M330 438 Q330 446 338 446 H399 Q407 446 407 454 V466" stroke="#9AA6B8" stroke-width="1.8" fill="none"/>
+    <path d="M447 782 H677" stroke="#14213A" stroke-width="3" fill="none" marker-end="url(#a-ink)"/>
+    <path d="M917 782 H1147" stroke="#14213A" stroke-width="3" fill="none" marker-end="url(#a-ink)"/>
+    <path d="M330 744 V538" stroke="#7E899D" stroke-width="1.8" stroke-dasharray="5 6" fill="none"/>
+    <path d="M1270 744 V432" stroke="#2E7A48" stroke-width="2" stroke-dasharray="7 6" fill="none" marker-end="url(#a-lazo)"/>
+  </svg>
+
+  <!-- Encabezado -->
+  <div class="el eyebrow" style="left:64px;top:44px">Gérard Genette · <i>Figuras III</i></div>
+  <h1 class="el title" style="left:62px;top:68px">Componentes de la <em>narración</em></h1>
+  <div class="el legend" style="left:1000px;top:46px;width:536px">
+    <button type="button" class="c-voz" data-k="voz" data-legend aria-haspopup="dialog"><span class="sw"></span>Voz</button>
+    <button type="button" class="c-tiempo" data-k="tiempo" data-legend aria-haspopup="dialog"><span class="sw"></span>Tiempo</button>
+    <button type="button" class="c-modo" data-k="modo" data-legend aria-haspopup="dialog"><span class="sw"></span>Modo</button>
+  </div>
+  <div class="el hint" style="left:1000px;top:90px;width:536px">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 9l5 12 1.8-5.2L21 14Z"/><path d="M7.2 2.2 8 5.1"/><path d="M5.1 8l-2.9-.8"/><path d="M14 4.1 12 6"/><path d="M6 12l-1.9 2"/></svg>
+    Pulsa cualquier elemento para ver su ficha
+  </div>
+
+  <!-- Etiquetas de plano -->
+  <button type="button" class="el plano" style="left:68px;top:594px" data-k="planoImag" aria-haspopup="dialog"><b>Plano imaginario</b><span>la ficción</span></button>
+  <button type="button" class="el plano" style="left:68px;top:700px" data-k="planoReal" aria-haspopup="dialog"><b>Plano real</b><span>escritura y lectura</span></button>
+
+  <!-- Distinción clave -->
+  <button type="button" class="el aux" style="left:68px;top:156px;width:220px;height:118px" data-k="veHabla" aria-haspopup="dialog">
+    <span class="k">No confundir</span>
+    <span class="vsrow vs-m"><b>¿Quién ve?</b><small>modo</small></span>
+    <span class="neq">≠</span>
+    <span class="vsrow vs-v"><b>¿Quién habla?</b><small>voz</small></span>
+  </button>
+
+  <!-- Tríada -->
+  <button type="button" class="el aux" style="left:1312px;top:156px;width:220px;height:118px" data-k="triada" aria-haspopup="dialog">
+    <span class="k">La tríada de base</span>
+    <span class="rows">
+      <span class="r"><span class="d"></span><b>Narración</b> el acto</span>
+      <span class="r"><span class="d"></span><b>Relato</b> el texto</span>
+      <span class="r"><span class="d"></span><b>Historia</b> lo contado</span>
+    </span>
+  </button>
+
+  <!-- Narración -->
+  <button type="button" class="el node dark" style="left:660px;top:160px;width:280px;height:54px" data-k="narracion" aria-haspopup="dialog">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 10v4M7 6v12M11 3v18M15 7v10M19 10v4"/></svg></span>
+    <span><span class="nm">Narración</span><span class="sb">el acto de narrar</span></span>
+  </button>
+
+  <!-- Voz -->
+  <div class="el cat cat-voz" style="left:556px;top:232px;width:488px">
+    <button type="button" class="cat-head" data-k="voz" aria-haspopup="dialog">
+      <span class="cat-name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>Voz</span>
+      <span class="cat-q">¿quién habla?</span>
+    </button>
+    <div class="chips">
+      <button type="button" class="chip" data-k="vTiempo" aria-haspopup="dialog">Tiempo de la narración</button>
+      <button type="button" class="chip" data-k="vNiveles" aria-haspopup="dialog">Niveles</button>
+      <button type="button" class="chip" data-k="vPersona" aria-haspopup="dialog">Persona</button>
+      <button type="button" class="chip" data-k="vFunciones" aria-haspopup="dialog">Funciones</button>
+    </div>
+  </div>
+
+  <!-- Cadena -->
+  <button type="button" class="el node" style="left:205px;top:334px;width:250px;height:92px" data-k="narrador" aria-haspopup="dialog">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
+    <span><span class="nm">Narrador(a)</span><span class="sb">¿quién habla?</span></span>
+  </button>
+  <div class="el lbl" style="left:453px;top:350px;width:200px">produce</div>
+
+  <button type="button" class="el node hero" style="left:655px;top:330px;width:290px;height:100px" data-k="relato" aria-haspopup="dialog">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></span>
+    <span><span class="nm">Relato</span><span class="sb">discurso o texto narrativo</span></span>
+  </button>
+  <div class="el lbl" style="left:943px;top:350px;width:200px">se dirige a</div>
+
+  <button type="button" class="el node" style="left:1145px;top:334px;width:250px;height:92px" data-k="narratario" aria-haspopup="dialog">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4"/></svg></span>
+    <span><span class="nm">Narratario(a)</span><span class="sb">¿a quién se cuenta?</span></span>
+  </button>
+
+  <!-- Presente / ausente -->
+  <button type="button" class="el branch" style="left:182px;top:466px;width:142px;height:62px" data-k="homo" aria-haspopup="dialog"><small>Presente</small><b>Homodiegético</b></button>
+  <button type="button" class="el branch" style="left:336px;top:466px;width:142px;height:62px" data-k="hetero" aria-haspopup="dialog"><small>Ausente</small><b>Heterodiegético</b></button>
+
+  <!-- Tiempo y Modo -->
+  <div class="el cat cat-tm" style="left:520px;top:452px;width:560px">
+    <div class="half c-tiempo">
+      <button type="button" class="cat-head" data-k="tiempo" aria-haspopup="dialog">
+        <span class="cat-name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3.5 2"/></svg>Tiempo</span>
+        <span class="cat-q">del relato</span>
+      </button>
+      <div class="chips">
+        <button type="button" class="chip" data-k="tOrden" aria-haspopup="dialog">Orden</button>
+        <button type="button" class="chip" data-k="tDuracion" aria-haspopup="dialog">Duración</button>
+        <button type="button" class="chip" data-k="tFrecuencia" aria-haspopup="dialog">Frecuencia</button>
+      </div>
+    </div>
+    <div class="half c-modo">
+      <button type="button" class="cat-head" data-k="modo" aria-haspopup="dialog">
+        <span class="cat-name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></svg>Modo</span>
+        <span class="cat-q">¿quién ve?</span>
+      </button>
+      <div class="chips">
+        <button type="button" class="chip" data-k="mDistancia" aria-haspopup="dialog">Distancia</button>
+        <button type="button" class="chip" data-k="mPerspectiva" aria-haspopup="dialog">Perspectiva</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historia -->
+  <button type="button" class="el node ink" style="left:665px;top:552px;width:270px;height:66px" data-k="historia" aria-haspopup="dialog">
+    <span class="ic" style="width:42px;height:42px;border-radius:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19"/><path d="M12 2.5a14.5 14.5 0 0 1 3.8 9.5 14.5 14.5 0 0 1-3.8 9.5 14.5 14.5 0 0 1-3.8-9.5A14.5 14.5 0 0 1 12 2.5z"/></svg></span>
+    <span><span class="nm" style="font-size:20px">Historia</span><span class="sb" style="margin-top:2px">la diégesis: lo contado</span></span>
+  </button>
+
+  <!-- Lazos entre planos -->
+  <button type="button" class="el tag tag-neq" style="left:250px;top:652px;width:160px" data-k="noEq" aria-haspopup="dialog"><i>≠</i>Autor y narrador</button>
+  <button type="button" class="el tag tag-lazo" style="left:1200px;top:652px;width:140px" data-k="ident" aria-haspopup="dialog">Identificación</button>
+
+  <!-- Plano real -->
+  <button type="button" class="el node real" style="left:215px;top:744px;width:230px;height:76px" data-k="autor" aria-haspopup="dialog">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg></span>
+    <span><span class="nm">Autor(a)</span><span class="sb">escribe y elige</span></span>
+  </button>
+  <div class="el lbl" style="left:462px;top:752px;width:200px">escritura</div>
+  <button type="button" class="el node real" style="left:685px;top:744px;width:230px;height:76px" data-k="obra" aria-haspopup="dialog">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+    <span><span class="nm">Obra escrita</span><span class="sb">el libro</span></span>
+  </button>
+  <div class="el lbl" style="left:932px;top:752px;width:200px">lectura</div>
+  <button type="button" class="el node real" style="left:1155px;top:744px;width:230px;height:76px" data-k="lector" aria-haspopup="dialog">
+    <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M14 15a2 2 0 0 0-4 0"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/></svg></span>
+    <span><span class="nm">Lector(a) real</span><span class="sb">lee la obra</span></span>
+  </button>
+
+  <div class="el src" style="left:64px;top:874px">Basado en la guía de estudio de <i>Figuras III</i> (Gérard Genette, trad. Carlos Manzano, Lumen, 1989).</div>
+</div>
+</div>
+
+<div class="pop" id="pop" role="dialog" aria-labelledby="popT" tabindex="-1" hidden>
+  <span class="tip" id="popTip"></span>
+  <div class="pop-h">
+    <div class="pop-k" id="popK"></div>
+    <h3 id="popT"></h3>
+    <p class="q" id="popQ"></p>
+    <button type="button" class="x" id="popX" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+  <div class="pop-b" id="popB"></div>
+  <div class="pop-f" id="popF"></div>
+</div>
+
+<div class="rotate" id="rotate" hidden>Gira el teléfono para ver la lámina más grande</div>
+
+<script>
+const C = {
+  voz:["var(--voz)","var(--voz-tint)"], tiempo:["var(--tiempo)","var(--tiempo-tint)"], modo:["var(--modo)","var(--modo-tint)"],
+  ink:["var(--ink)","var(--neutral-tint)"], real:["var(--real-c)","var(--real-tint)"], lazo:["var(--lazo)","var(--lazo-tint)"], plano:["var(--plano)","var(--plano-tint)"]
+};
+
+/* Campos: k etiqueta, t título, q pregunta, p definición, ls/l lista, ls2/l2 segunda lista, f fórmula, ej ejemplo, ojo no confundir, rel relacionados, r páginas. *texto* = cursiva. */
+const INFO = {
+  triada:{c:"ink", k:"Base del esquema", t:"La tríada de base", q:"Tres nociones que hay que distinguir siempre",
+    p:"Genette organiza todo el análisis a partir de tres términos. El relato es lo único que el lector tiene delante: la historia y la narración se reconstruyen desde él.",
+    ls:"Los tres términos", l:[["Historia","lo contado: acontecimientos y personajes (la diégesis)."],["Relato","el discurso o texto narrativo que la cuenta."],["Narración","el acto que produce ese relato y su situación."]],
+    ls2:"Qué estudia cada categoría", l2:[["Tiempo y modo","la relación historia ↔ relato."],["Voz","la relación de la narración con el relato y con la historia."]],
+    ej:"Las tres categorías se toman, por analogía, de la gramática del verbo. Genette reorganiza así la propuesta de Todorov (1966), que hablaba de tiempo, aspecto y modo.",
+    rel:["narracion","relato","historia"], r:"pp. 85–87"},
+  veHabla:{c:"plano", k:"Distinción clave", t:"¿Quién ve? ≠ ¿quién habla?", q:"El error que Genette quiere corregir",
+    p:"La mayoría de los estudios sobre el «punto de vista» confundían dos preguntas: qué personaje orienta la perspectiva y quién es el narrador.",
+    l:[["¿Quién ve?","pertenece al modo: es la focalización."],["¿Quién habla?","pertenece a la voz: es el narrador."]],
+    ej:"Que un narrador diga «yo» no significa que el relato esté focalizado en él. En la *Recherche*, Proust pasa de la conciencia del protagonista a la del narrador, y de ahí a la de otros personajes.",
+    rel:["mPerspectiva","narrador","vPersona"], r:"pp. 241, 252, 262"},
+  narracion:{c:"ink", k:"La tríada · se estudia en la voz", t:"Narración", q:"¿Quién cuenta, a quién y cuándo?",
+    p:"El acto narrativo que produce el relato. Genette lo llama también situación o instancia narrativa, y le reconoce dos protagonistas: el narrador y su destinatario, real o virtual.",
+    ls:"Qué abarca", l:[["El narrador","quien realiza el acto de contar."],["El narratario","a quien ese acto se dirige."],["Su posición","cuándo se narra y desde qué nivel."]],
+    ojo:"Narración ≠ relato: la narración es el acto; el relato, su producto. Y la situación narrativa de una ficción nunca se reduce a su situación de escritura.",
+    rel:["voz","narrador","narratario"], r:"pp. 86–87, 271"},
+  voz:{c:"voz", k:"Categoría · narración ↔ relato e historia", t:"Voz", q:"¿Quién habla?",
+    p:"Designa la relación con el sujeto de la enunciación: cómo queda implicada la narración en el relato. Genette la toma de la gramática, donde la voz es la acción verbal vista en relación con su sujeto.",
+    ls:"Subcategorías", l:[["Tiempo de la narración","cuándo se narra."],["Niveles narrativos","desde qué nivel se narra."],["Persona","si el narrador participa en la historia."],["Funciones del narrador","qué hace además de contar."],["Narratario","a quién se dirige."]],
+    ojo:"La voz no es el modo. Una pregunta es ¿quién habla?; la otra, ¿quién ve?",
+    rel:["vTiempo","vNiveles","vPersona","vFunciones"], r:"pp. 87, 271–313"},
+  vTiempo:{c:"voz", k:"Voz", t:"Tiempo de la narración", q:"¿Cuándo se narra respecto de la historia?",
+    p:"La principal determinación de la instancia narrativa es su posición temporal respecto de lo que cuenta. Hay cuatro posiciones:",
+    l:[["Ulterior","después; relato en pasado, la posición clásica y la más frecuente (*Robinson Crusoe*)."],["Anterior","antes; relato predictivo, por lo general en futuro (el sueño de Jocabel en *Moyse sauvé*)."],["Simultánea","en el presente de la acción (las primeras novelas de Robbe-Grillet)."],["Intercalada","entre los momentos de la acción: novela epistolar, diario. Es la más compleja, porque la narración puede influir en la historia."]],
+    ej:"La narración ulterior tiene una posición en el tiempo pero no tiene duración propia. La simultánea y la intercalada, en cambio, viven de su duración.",
+    ojo:"No confundir con el tiempo del relato (orden, duración, frecuencia). Intercalada ≠ simultánea.",
+    rel:["tiempo","voz"], r:"pp. 274–279"},
+  vNiveles:{c:"voz", k:"Voz", t:"Niveles narrativos", q:"¿Desde qué nivel se cuenta?",
+    p:"Lo contado por un relato se sitúa en el nivel siguiente al del acto narrativo que lo produce.",
+    ls:"Los tres niveles en *Manon Lescaut*", l:[["Extradiegético","el acto narrativo del relato primero: Renoncour redacta sus *Memorias*."],["Intradiegético","lo contado en ese relato, incluidos otros actos narrativos: des Grieux narra en la posada del Lion d'or."],["Metadiegético","lo contado en un relato segundo: la historia de des Grieux y Manon."]],
+    ls2:"Funciones del relato metadiegético", l2:[["Explicativa","responde a qué condujo a la situación actual (Ulises ante los feacios)."],["Temática","contraste o analogía; su forma extrema es la puesta en abismo."],["El acto de narrar","importa el hecho de contar, no lo contado: distraer, obstruir."]],
+    ojo:"Pasar de un nivel a otro sin narración es una metalepsis: un personaje de Cortázar mata a su lector. Además, extradiegético no significa real, ni diegético significa ficticio.",
+    rel:["narrador","noEq"], r:"pp. 284–290"},
+  vPersona:{c:"voz", k:"Voz", t:"Persona", q:"¿Participa el narrador en la historia que cuenta?",
+    p:"La elección del novelista no es entre dos formas gramaticales (yo / él), sino entre dos actitudes narrativas. Todo narrador puede decir «yo»; lo decisivo es si ese «yo» es también un personaje.",
+    l:[["Heterodiegético","ausente de la historia que cuenta: Homero en la *Ilíada*."],["Homodiegético","presente como personaje: *Gil Blas*, *Cumbres borrascosas*."],["Autodiegético","homodiegético que es el protagonista."],["Testigo","homodiegético con un papel secundario, de observador."]],
+    ojo:"Narrar en primera persona no implica focalizar en el protagonista. «Heterodiegético» también nombra un tipo de analepsis: la que trata otra línea de historia.",
+    rel:["homo","hetero","veHabla"], r:"pp. 298–300"},
+  vFunciones:{c:"voz", k:"Voz", t:"Funciones del narrador", q:"¿Qué hace el narrador además de contar?",
+    p:"Genette las distribuye según el aspecto del relato hacia el que se orienta el narrador.",
+    l:[["Narrativa","hacia la historia. Ningún narrador puede abandonarla sin dejar de serlo."],["De control","hacia el texto: señala su organización interna (discurso metanarrativo)."],["De comunicación","hacia el narratario: establecer o mantener el contacto (recuerda las funciones fática y conativa de Jakobson)."],["Testimonial","hacia sí mismo: fuente de su información, precisión de sus recuerdos, emociones."],["Ideológica","comentario autorizado y didáctico de la acción, como en Balzac."]],
+    ej:"*Tristram Shandy* es el caso del narrador siempre vuelto hacia su público, más interesado en esa relación que en su propio relato.",
+    rel:["narrador","narratario"], r:"pp. 309–310"},
+  narrador:{c:"voz", k:"Plano imaginario", t:"Narrador(a)", q:"¿Quién habla?",
+    p:"La instancia que cuenta la historia. Su estatuto se define por dos rasgos a la vez: su nivel narrativo y su relación con la historia.",
+    ls:"Los cuatro estatutos", l:[["Extra-heterodiegético","Homero: en primer grado, cuenta una historia de la que está ausente."],["Extra-homodiegético","Gil Blas: en primer grado, cuenta su propia historia."],["Intra-heterodiegético","Scheherazade: en segundo grado, cuenta historias de las que suele estar ausente."],["Intra-homodiegético","Ulises (cantos IX–XII): en segundo grado, cuenta su propia historia."]],
+    ojo:"Narrador ≠ autor. Narrador ≠ personaje focal: uno habla y el otro ve.",
+    rel:["homo","hetero","vNiveles","vFunciones"], r:"pp. 241, 298–302"},
+  homo:{c:"voz", k:"Persona · narrador presente", t:"Homodiegético", q:"El narrador es un personaje de su historia",
+    p:"El narrador está presente como personaje en la historia que cuenta. A diferencia de la ausencia, la presencia tiene grados.",
+    l:[["Autodiegético","el narrador es el protagonista de su relato (*Gil Blas*)."],["Testigo u observador","el narrador cumple un papel secundario."]],
+    ej:"El relato «en primera persona» se presta más que ningún otro a la anticipación: como es retrospectivo, autoriza al narrador a aludir al porvenir. Robinson Crusoe dice que el discurso de su padre fue «verdaderamente profético».",
+    ojo:"Que el narrador diga «yo» no significa que el relato esté focalizado en él como personaje.",
+    rel:["hetero","vPersona","tOrden"], r:"pp. 121, 252, 299–300"},
+  hetero:{c:"voz", k:"Persona · narrador ausente", t:"Heterodiegético", q:"El narrador no participa en lo que cuenta",
+    p:"El narrador está ausente de la historia que cuenta. La ausencia es absoluta: no tiene grados.",
+    l:[["Extradiegético","Homero en la *Ilíada*; Flaubert en *La educación sentimental*."],["Intradiegético","Scheherazade, personaje del relato marco que cuenta historias de las que suele estar ausente."]],
+    ej:"Un narrador heterodiegético puede decir «yo» para designarse como narrador, como Virgilio al comenzar «Canto a las armas y al hombre», sin ser personaje de la historia.",
+    ojo:"No confundir con la analepsis heterodiegética, que es un salto atrás hacia otra línea de historia.",
+    rel:["homo","vPersona"], r:"pp. 298–302"},
+  relato:{c:"voz", k:"La tríada", t:"Relato", q:"El texto que tenemos delante",
+    p:"El discurso o texto narrativo que cuenta la historia. Es una secuencia «dos veces temporal»: tiene el tiempo de la historia y un seudotiempo, que en rigor es la longitud del texto.",
+    l:[["Relato de acontecimientos","pasa lo no verbal a lo verbal; por eso su mímesis es solo una ilusión."],["Relato de palabras","puede reproducir el lenguaje de los personajes con distintos grados de distancia."],["Relato primero","el nivel temporal respecto del cual se definen las anacronías."]],
+    rel:["tiempo","modo","historia","narracion"], r:"pp. 86–91, 104, 221–228"},
+  narratario:{c:"voz", k:"Plano imaginario", t:"Narratario(a)", q:"¿A quién se cuenta?",
+    p:"El destinatario del relato, inscrito en el texto y situado en el mismo nivel narrativo que el narrador.",
+    l:[["Extradiegético","se confunde con el lector virtual; con él puede identificarse cada lector real."],["Intradiegético","es un personaje que escucha; se interpone entre el narrador y nosotros y nos mantiene a distancia."]],
+    ej:"Aunque el narrador finja no dirigirse a nadie, como Meursault, todo relato contiene una llamada a su destinatario.",
+    ojo:"Narratario ≠ lector real.",
+    rel:["ident","lector","vFunciones"], r:"p. 313"},
+  historia:{c:"ink", k:"La tríada", t:"Historia", q:"¿Qué se cuenta?",
+    p:"Lo contado: los acontecimientos y personajes que forman el universo de la ficción. Genette la llama diégesis.",
+    l:[["Su tiempo","se mide en horas, días o años; el relato lo reordena, lo acelera o lo repite."],["Sus personajes","actúan en la diégesis; uno puede ser el personaje focal y otro, además, narrador."]],
+    ojo:"Diegético no significa ficticio: París y Balbec están en el mismo nivel, aunque uno sea real y el otro inventado.",
+    rel:["tiempo","modo","relato"], r:"pp. 86, 145, 284"},
+  tiempo:{c:"tiempo", k:"Categoría · historia ↔ relato", t:"Tiempo del relato", q:"¿En qué orden, a qué velocidad y cuántas veces?",
+    p:"Compara el tiempo de la historia con el (seudo)tiempo del relato. Genette toma de Christian Metz la idea de que el relato es una secuencia «dos veces temporal».",
+    ls:"Tres relaciones", l:[["Orden","sucesión en la historia frente a disposición en el relato."],["Duración","duración de la historia frente a longitud del texto: la velocidad."],["Frecuencia","capacidad de repetición de la historia frente a la del relato."]],
+    rel:["tOrden","tDuracion","tFrecuencia"], r:"pp. 89–91"},
+  tOrden:{c:"tiempo", k:"Tiempo del relato", t:"Orden", q:"¿En qué orden se cuenta?",
+    p:"Estudia las anacronías: toda discordancia entre el orden de la historia y el del relato. La tradición occidental las usa desde la *Ilíada*, que empieza *in medias res* y luego retrocede para explicar la cólera de Aquiles.",
+    l:[["Analepsis","evocación posterior de un hecho anterior (retrospección)."],["Prolepsis","se cuenta por adelantado un hecho posterior (anticipación)."],["Alcance","cuán lejos del «presente» del relato salta la anacronía."],["Amplitud","cuánto tiempo de historia abarca."]],
+    ls2:"Otras distinciones", l2:[["Externa / interna / mixta","fuera, dentro o a caballo del relato primero."],["Completiva / repetitiva","llena una laguna o vuelve sobre lo ya contado."],["Parcial / completa","termina en elipsis o se junta con el relato primero."]],
+    ej:"La herida de Ulises es una analepsis externa. Las prolepsis son raras en Balzac, Dickens o Tolstói, porque chocan con el suspense de la novela clásica.",
+    rel:["relato","homo"], r:"pp. 91–122"},
+  tDuracion:{c:"tiempo", k:"Tiempo del relato", t:"Duración", q:"¿A qué velocidad se cuenta?",
+    p:"Nadie puede medir la duración de un relato, pero sí su velocidad: la relación entre la duración de la historia y la longitud del texto. Sus variaciones, las anisocronías, producen el ritmo.",
+    ls:"Los cuatro movimientos", l:[["Pausa descriptiva","texto sin avance de la historia: lentitud absoluta."],["Escena","igualdad solo convencional entre relato e historia; casi siempre dialogada."],["Sumario","mucho tiempo de historia en poco texto; velocidad variable."],["Elipsis","tiempo de historia sin texto: velocidad infinita. Puede ser determinada o indeterminada; explícita, implícita o hipotética."]],
+    ej:"En Balzac la descripción detiene la historia; en Proust sigue la mirada del personaje y no es una pausa. La novela clásica alterna sumarios de enlace con escenas dramáticas.",
+    rel:["mDistancia","tOrden"], r:"pp. 144–164"},
+  tFrecuencia:{c:"tiempo", k:"Tiempo del relato", t:"Frecuencia", q:"¿Cuántas veces se cuenta?",
+    p:"Un acontecimiento puede repetirse, y el relato puede repetir su enunciado. De su combinación salen tres tipos.",
+    l:[["Singulativo (1R/1H)","una vez lo que pasó una vez: «Ayer me acosté temprano». También el anafórico (nR/nH)."],["Repetitivo (nR/1H)","varias veces lo que pasó una vez: *La celosía*, *Rashomon*, *El ruido y la furia*."],["Iterativo (1R/nH)","una sola vez lo que pasó muchas: «todos los días…»; los domingos de Combray."]],
+    ej:"La primera frase de la *Recherche*, «Durante mucho tiempo me acosté temprano», ya es iterativa. Toda serie iterativa tiene determinación (sus límites), especificación (su ritmo) y extensión (lo que dura cada unidad).",
+    ojo:"Repetitivo ≠ singulativo anafórico: lo que cuenta es si coincide el número de veces en relato e historia.",
+    rel:["tOrden","tDuracion"], r:"pp. 172–189"},
+  modo:{c:"modo", k:"Categoría · historia ↔ relato", t:"Modo", q:"¿Quién ve y cuánta información se da?",
+    p:"Regula la información narrativa. Genette lo compara con mirar un cuadro: la precisión depende de la distancia, y la amplitud, de la posición respecto de lo que lo tapa.",
+    ls:"Dos modalidades", l:[["Distancia","cuánta información se da y con qué grado de mediación."],["Perspectiva","según quién se filtra esa información: la focalización."]],
+    ojo:"¿Quién ve? (modo) no es ¿quién habla? (voz).",
+    rel:["mDistancia","mPerspectiva","veHabla"], r:"pp. 219–220"},
+  mDistancia:{c:"modo", k:"Modo", t:"Distancia", q:"¿Cuánto se muestra y cuánto se cuenta?",
+    p:"Retoma la oposición de Platón entre relato puro y mímesis, y la de Henry James entre *telling* y *showing*. Como el lenguaje significa sin imitar, la mímesis narrativa es solo una ilusión.",
+    f:"información + informador = C",
+    ls:"El discurso del personaje, de más a menos distancia", l:[["Narrativizado","las palabras se cuentan como un hecho más."],["Transpuesto","estilo indirecto o indirecto libre: el narrador condensa e interpreta."],["Restituido","estilo directo: se cede la palabra al personaje."],["Inmediato","el «monólogo interior», sin introducción del narrador."]],
+    ej:"Mostrar es dar el máximo de información con el mínimo de narrador; contar es lo inverso. Por eso la escena es el movimiento propio del *showing*.",
+    rel:["tDuracion","voz"], r:"pp. 220–240"},
+  mPerspectiva:{c:"modo", k:"Modo", t:"Perspectiva", q:"¿Quién ve?",
+    p:"La focalización: el filtro que restringe, o no, la información según el saber de un personaje.",
+    l:[["Cero","relato no focalizado: el narrador no se limita al saber de ningún personaje (relato clásico)."],["Interna","fija (un personaje), variable (varios, sobre hechos distintos) o múltiple (varios, sobre el mismo hecho)."],["Externa","vemos actuar al héroe sin conocer sus pensamientos (Hammett, Hemingway)."]],
+    ls2:"Alteraciones", l2:[["Paralipsis","se da menos información de la que el código exige."],["Paralepsis","se da más de la que autoriza."]],
+    ojo:"Afecta segmentos, no obras enteras: *Madame Bovary* combina las tres. La interna rigurosa solo se da en el monólogo interior o en *La celosía*.",
+    rel:["veHabla","mDistancia"], r:"pp. 241–262"},
+  autor:{c:"real", k:"Plano real", t:"Autor(a)", q:"¿Quién escribe?",
+    p:"La persona real que compone la obra. No cuenta la historia: elige quién la contará.",
+    l:[["Su elección","hacer contar la historia por uno de sus personajes o por un narrador extraño a ella."],["Su saber","en el relato autobiográfico, el del narrador queda entre el del protagonista y la omnisciencia del novelista."]],
+    ojo:"La metalepsis del autor finge que el autor produce lo que cuenta, como cuando decimos que Virgilio «hace morir» a Dido.",
+    rel:["noEq","narrador","obra"], r:"pp. 259, 290, 298"},
+  obra:{c:"real", k:"Plano real", t:"Obra escrita", q:"El libro como objeto",
+    p:"Lo que el autor escribe y el lector lee: el soporte real del relato.",
+    ej:"La situación narrativa de una ficción nunca se reduce a esta situación de escritura. Ni siquiera es forzoso que la narración se presente como escrita: el discurso inmediato excluye toda forma de la instancia narrativa.",
+    rel:["relato","autor","lector"], r:"pp. 271, 286"},
+  lector:{c:"real", k:"Plano real", t:"Lector(a) real", q:"¿Quién lee?",
+    p:"La persona que lee la obra, fuera de la ficción.",
+    l:[["Frente al narratario","no es él, pero puede ocupar su lugar."],["La identificación","el narratario extradiegético se confunde con el lector virtual, y con él puede identificarse cada lector real."]],
+    ojo:"Un narratario intradiegético nos mantiene a distancia. Cuanto más discreta es la instancia receptora en el texto, más fácil es la identificación.",
+    rel:["ident","narratario","obra"], r:"p. 313"},
+  noEq:{c:"plano", k:"Distinción clave", t:"Autor ≠ narrador", q:"Dos instancias, dos planos",
+    l:[["Autor","plano real: escribe y elige la actitud narrativa."],["Narrador","plano imaginario: cuenta."]],
+    ej:"Incluso un «autor» ficticio es un narrador: Renoncour, «autor» de las *Memorias* en *Manon Lescaut*, es extradiegético. Y el protagonista de *Albert Savarus* es autor intradiegético de una obra metadiegética.",
+    rel:["autor","narrador","vNiveles"], r:"pp. 284–286, 298"},
+  ident:{c:"lazo", k:"Entre los dos planos", t:"Identificación", q:"Cómo el lector real entra en la ficción",
+    p:"El narrador extradiegético solo puede dirigirse a un narratario extradiegético, que se confunde con el lector virtual. Con esa instancia puede identificarse cada lector real.",
+    ej:"Cuanto más transparente es la instancia receptora, más silenciosa resulta en el relato y más irresistible es la identificación. Un narratario intradiegético, en cambio, se interpone entre el narrador y nosotros.",
+    rel:["narratario","lector"], r:"p. 313"},
+  planoImag:{c:"plano", k:"Plano", t:"Plano imaginario", q:"La ficción y su situación narrativa",
+    p:"Aquí están el narrador que cuenta, el relato, el narratario que lo recibe y la historia contada. Son situaciones y funciones del texto, no personas reales.",
+    ojo:"Extradiegético ≠ real: el narrador extradiegético también pertenece a la ficción.",
+    rel:["narracion","narrador","narratario","historia"]},
+  planoReal:{c:"plano", k:"Plano", t:"Plano real", q:"Escritura y lectura",
+    p:"El autor, el libro y el lector existen fuera de la ficción. La situación narrativa nunca se reduce a esta situación de escritura.",
+    rel:["autor","obra","lector"]}
+};
+
+const stage = document.getElementById("stage");
+const vp = document.querySelector(".viewport");
+const pop = document.getElementById("pop");
+const tip = document.getElementById("popTip");
+const rotate = document.getElementById("rotate");
+let current = null;
+
+function fit(){
+  const cs = getComputedStyle(vp);
+  const w = vp.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const h = vp.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  stage.style.setProperty("--s", Math.max(.1, Math.min(w / 1600, h / 900)));
+  rotate.hidden = !(innerWidth < innerHeight && innerWidth < 760);
+  if (current) place(current);
+}
+
+function fmt(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/\*(.+?)\*/g,"<i>$1</i>");
+}
+function list(items){
+  return "<ul>" + items.map(([a,b]) => "<li><span><b>" + fmt(a) + ":</b> " + fmt(b) + "</span></li>").join("") + "</ul>";
+}
+
+function fill(d){
+  const [pc, pt] = C[d.c];
+  pop.style.setProperty("--pc", pc);
+  pop.style.setProperty("--pt", pt);
+  document.getElementById("popK").textContent = d.k;
+  document.getElementById("popT").textContent = d.t;
+  const q = document.getElementById("popQ");
+  q.hidden = !d.q; q.textContent = d.q || "";
+  let h = "";
+  if (d.p) h += "<p>" + fmt(d.p) + "</p>";
+  if (d.f) h += "<div><span class=\"formula\">" + fmt(d.f) + "</span></div>";
+  if (d.l) h += "<div>" + (d.ls ? "<p class=\"sl\">" + fmt(d.ls) + "</p>" : "") + list(d.l) + "</div>";
+  if (d.l2) h += "<div>" + (d.ls2 ? "<p class=\"sl\">" + fmt(d.ls2) + "</p>" : "") + list(d.l2) + "</div>";
+  if (d.ej) h += "<div class=\"box box-ex\"><p class=\"sl\">En Genette</p><p>" + fmt(d.ej) + "</p></div>";
+  if (d.ojo) h += "<div class=\"box box-ojo\"><p class=\"sl\">No confundir</p><p>" + fmt(d.ojo) + "</p></div>";
+  document.getElementById("popB").innerHTML = h;
+  let f = "";
+  if (d.rel && d.rel.length) f += "<span class=\"vt\">Ver también</span>" + d.rel.filter(k => INFO[k]).map(k => "<button type=\"button\" class=\"go\" data-go=\"" + k + "\">" + fmt(INFO[k].t) + "</button>").join("");
+  if (d.r) f += "<span class=\"ref\"><i>Figuras III</i>, " + fmt(d.r) + "</span>";
+  const foot = document.getElementById("popF");
+  foot.innerHTML = f; foot.hidden = !f;
+}
+
+function anchorFor(k){
+  return document.querySelector(".stage [data-k=\"" + k + "\"]:not([data-legend])") || document.querySelector("[data-k=\"" + k + "\"]");
+}
+
+function place(btn){
+  const r = btn.getBoundingClientRect();
+  const m = 12, gap = 14, vw = innerWidth, vh = innerHeight;
+  const pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let left, top, side;
+  if (r.bottom + gap + ph <= vh - m) { side = "below"; top = r.bottom + gap; }
+  else if (r.top - gap - ph >= m) { side = "above"; top = r.top - gap - ph; }
+  else { side = "side"; }
+  if (side === "side") {
+    top = Math.max(m, Math.min(r.top + r.height / 2 - ph / 2, vh - m - ph));
+    if (r.right + gap + pw <= vw - m) left = r.right + gap;
+    else if (r.left - gap - pw >= m) left = r.left - gap - pw;
+    else left = (vw - pw) / 2;
+  } else {
+    left = Math.max(m, Math.min(r.left + r.width / 2 - pw / 2, vw - m - pw));
+    tip.style.left = Math.max(18, Math.min(r.left + r.width / 2 - left - 7, pw - 32)) + "px";
+  }
+  pop.dataset.side = side;
+  pop.style.left = Math.round(left) + "px";
+  pop.style.top = Math.round(top) + "px";
+}
+
+function openPop(btn){
+  if (!btn) return;
+  const d = INFO[btn.dataset.k];
+  if (!d) return;
+  if (current) { current.classList.remove("is-active"); current.setAttribute("aria-expanded","false"); }
+  current = btn;
+  fill(d);
+  pop.hidden = false;
+  pop.scrollTop = 0;
+  pop.style.animation = "none"; void pop.offsetWidth; pop.style.animation = "";
+  place(btn);
+  btn.classList.add("is-active");
+  btn.setAttribute("aria-expanded","true");
+  pop.focus({preventScroll:true});
+}
+
+function closePop(returnFocus){
+  if (!current) return;
+  const btn = current;
+  current = null;
+  pop.hidden = true;
+  btn.classList.remove("is-active");
+  btn.setAttribute("aria-expanded","false");
+  if (returnFocus) btn.focus({preventScroll:true});
+}
+
+document.querySelectorAll("[data-k]").forEach(b => b.setAttribute("aria-expanded","false"));
+
+document.addEventListener("click", e => {
+  const go = e.target.closest("[data-go]");
+  if (go) { openPop(anchorFor(go.dataset.go)); return; }
+  if (e.target.closest("#popX")) { closePop(true); return; }
+  const b = e.target.closest("[data-k]");
+  if (b) { if (current === b) closePop(false); else openPop(b); return; }
+  if (!pop.contains(e.target)) closePop(false);
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closePop(true); });
+addEventListener("resize", fit);
+fit();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (current) place(current); });
+</script>
+</body>
+</html>
