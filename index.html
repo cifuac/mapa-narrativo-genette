@@ -10,10 +10,10 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Hanken+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 /* Lámina 16:9 (1600×900) escalada a la pantalla. La obra escrita es un libro que contiene la ficción;
-   autor y lector quedan fuera, frente a sus contrapartes. Eje vertical: la tríada narración → relato → historia. */
+   autor y lector quedan fuera, frente a sus contrapartes. Eje vertical: la tríada narración → relato → historia.
+   Las instancias son tarjetas verticales de texto centrado; cada tarjeta se ajusta a su contenido y se centra en su eje (.cx). */
 :root{
-  --page:#E3E7EE;
-  --stage:#F8F9FB;
+  --page:#E2E6ED;
   --paper:#FFFFFF;
   --ink:#14213A;
   --ink-2:#465470;
@@ -21,7 +21,9 @@
   --line:#A7B1C2;
   --hair:#E3E8EF;
   --edge:#D3DBE7;
-  --fic:#EEF2F8;  --fic-dot:#D5DDE9;
+  --card-edge:rgba(20,33,58,.10);
+  --shadow:0 1px 1px rgba(20,33,58,.04), 0 8px 18px -10px rgba(20,33,58,.16), 0 24px 40px -26px rgba(20,33,58,.38);
+  --shadow-hi:0 1px 1px rgba(20,33,58,.05), 0 12px 22px -10px rgba(20,33,58,.22), 0 30px 48px -26px rgba(20,33,58,.45);
 
   --voz:#1F5FA6;    --voz-tint:#E5EEF8;
   --tiempo:#6B44B6; --tiempo-tint:#F0EAFA;
@@ -40,7 +42,7 @@
 [hidden]{display:none!important}
 html,body{height:100%;margin:0;overflow:hidden;background:var(--page)}
 body{font-family:var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased}
-button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:center}
 button:focus-visible{outline:3px solid var(--c, var(--voz));outline-offset:3px}
 
 .viewport{
@@ -55,106 +57,125 @@ button:focus-visible{outline:3px solid var(--c, var(--voz));outline-offset:3px}
   width:1600px;height:900px;
   transform:translate(-50%,-50%) scale(var(--s,.5));
   transform-origin:center center;
-  background:var(--stage);
+  background:
+    radial-gradient(900px 520px at 8% -8%, #FFFFFF 0%, rgba(255,255,255,0) 70%),
+    radial-gradient(900px 560px at 104% 112%, #E6EAF2 0%, rgba(230,234,242,0) 70%),
+    #F4F6F9;
   border-radius:24px;
   box-shadow:0 1px 2px rgba(20,33,58,.06), 0 30px 70px -22px rgba(20,33,58,.3);
   overflow:hidden;
 }
-html.is-fs, html.is-fs body{background:var(--stage)}
+html.is-fs, html.is-fs body{background:#F4F6F9}
 html.is-fs .viewport{padding:0}
 html.is-fs .stage{border-radius:0;box-shadow:none}
 
 .el{position:absolute;z-index:2;transition:opacity .2s ease}
+.cx{translate:-50% 0}
 .lines{position:absolute;inset:0;width:1600px;height:900px;pointer-events:none;z-index:1}
 
 /* Encabezado */
 .eyebrow{font-size:13px;font-weight:600;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase}
 .title{font-family:var(--serif);font-weight:400;font-size:54px;line-height:1;letter-spacing:-.012em;margin:0}
 .title em{font-style:italic;color:var(--voz)}
-.tools{display:flex;justify-content:flex-end}
-.fs{display:inline-flex;align-items:center;gap:9px;height:42px;padding:0 18px 0 14px;border-radius:999px;background:var(--ink);color:#FFFFFF;font-size:15px;font-weight:600;box-shadow:0 10px 20px -12px rgba(20,33,58,.6);transition:transform .15s, background .15s}
-.fs:hover{background:#22314F;transform:translateY(-1px)}
-.fs svg{width:19px;height:19px}
-.hint{font-size:14px;color:var(--ink-3);text-align:right}
-.hint kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--edge);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--paper);color:var(--ink-2)}
+.tools{display:flex;justify-content:flex-end;align-items:center;gap:16px}
+.hint{font-size:14px;color:var(--ink-3)}
+.fs{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:var(--paper);border:1px solid var(--card-edge);color:var(--ink);box-shadow:var(--shadow);transition:background .15s, color .15s, transform .15s, border-color .15s}
+.fs:hover{background:var(--ink);border-color:var(--ink);color:#FFFFFF;transform:translateY(-1px)}
+.fs svg{width:22px;height:22px}
 
 /* El libro (obra escrita) y la ficción */
-.page{position:absolute;width:1100px;height:700px;border-radius:20px;background:var(--paper);border:1px solid var(--edge);z-index:0}
-.page.p3{left:266px;top:156px;border-color:#E2E6EC}
-.page.p2{left:258px;top:148px;border-color:#DCE1E9}
-.page.p1{left:250px;top:140px;box-shadow:0 22px 44px -26px rgba(20,33,58,.4)}
-.fic{position:absolute;left:268px;top:158px;width:1064px;height:664px;border-radius:13px;z-index:0;
-  background-color:var(--fic);background-image:radial-gradient(var(--fic-dot) 1.1px, transparent 1.6px);background-size:22px 22px}
-.tab{display:inline-flex;align-items:center;gap:10px;height:32px;padding:0 15px;border-radius:999px;background:var(--paper);border:1.5px solid var(--real-edge);--c:var(--real);transition:border-color .15s}
+.page{position:absolute;width:1100px;height:700px;border-radius:22px;z-index:0}
+.page.p3{left:264px;top:154px;background:#ECEFF4;border:1px solid #DFE3EA}
+.page.p2{left:257px;top:147px;background:#F6F7FA;border:1px solid #DCE1E9}
+.page.p1{left:250px;top:140px;background:var(--paper);border:1px solid #D7DDE7;box-shadow:0 1px 1px rgba(20,33,58,.04), 0 34px 64px -36px rgba(20,33,58,.5)}
+.fic{position:absolute;left:268px;top:158px;width:1064px;height:664px;border-radius:14px;z-index:0;overflow:hidden;
+  background:radial-gradient(72% 64% at 50% 46%, #F7F9FC 0%, #EEF2F8 58%, #E6EBF3 100%);
+  box-shadow:inset 0 0 0 1px rgba(20,33,58,.05)}
+.fic::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(#C7D1E0 1.1px, transparent 1.7px);background-size:24px 24px;
+  -webkit-mask-image:radial-gradient(80% 75% at 50% 50%, #000 35%, transparent 100%);
+  mask-image:radial-gradient(80% 75% at 50% 50%, #000 35%, transparent 100%)}
+.glow{position:absolute;z-index:1;pointer-events:none;background:radial-gradient(closest-side, rgba(31,95,166,.18), rgba(31,95,166,0))}
+.tab{display:inline-flex;align-items:center;gap:10px;height:32px;padding:0 15px;border-radius:999px;background:var(--paper);border:1px solid var(--real-edge);box-shadow:0 6px 14px -10px rgba(20,33,58,.3);--c:var(--real);transition:border-color .15s}
 .tab:hover{border-color:var(--real)}
 .tab b{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--real)}
 .tab span{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink-3)}
-.plano{display:grid;gap:1px;--c:var(--plano)}
+.plano{display:grid;gap:1px;text-align:left;--c:var(--plano)}
 .plano b{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--plano)}
 .plano span{font-family:var(--serif);font-style:italic;font-size:17px;color:var(--ink-3)}
 .plano:hover b{text-decoration:underline;text-underline-offset:3px}
 
-/* Nodos */
+/* Instancias: tarjetas verticales centradas */
 .node{
-  display:flex;align-items:center;gap:14px;padding:0 18px;
-  border-radius:18px;background:var(--paper);border:1px solid var(--edge);
-  box-shadow:0 1px 0 rgba(20,33,58,.03), 0 14px 28px -18px rgba(20,33,58,.45);
-  transition:transform .16s ease, box-shadow .16s ease, border-color .16s, opacity .2s;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  padding:18px 18px 16px;border-radius:22px;
+  background:linear-gradient(180deg,#FFFFFF,#FAFBFD);
+  border:1px solid var(--card-edge);box-shadow:var(--shadow);
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s, opacity .2s;
   --c:var(--voz);
 }
-.node:hover{transform:translateY(-3px);border-color:var(--c);box-shadow:0 1px 0 rgba(20,33,58,.03), 0 20px 34px -18px rgba(20,33,58,.5)}
-.ic{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:none;background:var(--voz-tint);color:var(--voz)}
-.ic svg{width:24px;height:24px}
-.nm{display:block;font-family:var(--serif);font-size:26px;line-height:1;letter-spacing:-.005em}
-.sb{display:block;font-size:13.5px;color:var(--ink-3);margin-top:5px;line-height:1.2}
-.node.hero{background:linear-gradient(160deg,#2667B2,#1B4F8B);border-color:transparent;color:#FFFFFF;box-shadow:0 1px 0 rgba(20,33,58,.03), 0 22px 40px -18px rgba(31,95,166,.75)}
-.node.hero .ic{background:rgba(255,255,255,.15);color:#FFFFFF;width:52px;height:52px}
-.node.hero .nm{font-size:34px}
-.node.hero .sb{color:rgba(255,255,255,.8)}
-.node.dark{background:var(--ink);border-color:var(--ink);color:#FFFFFF;border-radius:999px;padding:0 26px 0 10px;--c:var(--ink)}
-.node.dark .ic{background:rgba(255,255,255,.12);color:#FFFFFF;border-radius:999px;width:36px;height:36px}
-.node.dark .ic svg{width:20px;height:20px}
-.node.dark .nm{font-size:27px}
-.node.dark .sb{color:rgba(255,255,255,.68);margin-top:2px;font-size:13px}
-.person{display:grid;justify-items:center;align-content:center;gap:0;text-align:center;border-radius:20px;background:var(--paper);border:1px solid var(--real-edge);box-shadow:0 14px 28px -18px rgba(20,33,58,.4);transition:transform .16s, border-color .16s, opacity .2s;--c:var(--real)}
-.person:hover{transform:translateY(-3px);border-color:var(--real)}
-.person .ic{width:52px;height:52px;border-radius:16px;background:var(--real-tint);color:var(--real);margin-bottom:12px}
-.person .nm{font-size:25px}
-.person .sb{margin-top:6px}
-.badge{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--paper);font-size:22px;font-weight:600;line-height:1;transition:transform .15s}
+.node:hover{transform:translateY(-3px);border-color:var(--c);box-shadow:var(--shadow-hi)}
+.ic{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;flex:none;margin-bottom:12px;
+  background:var(--voz-tint);color:var(--voz);box-shadow:inset 0 0 0 1px rgba(31,95,166,.14)}
+.ic svg{width:23px;height:23px}
+.nm{display:block;font-family:var(--serif);font-size:29px;line-height:1;letter-spacing:-.005em;white-space:nowrap}
+.sb{display:block;font-size:13.5px;color:var(--ink-3);margin-top:6px;line-height:1.25;white-space:nowrap}
+.node.hero{background:linear-gradient(165deg,#2C6EBB 0%,#1D5596 55%,#183F70 100%);border-color:transparent;color:#FFFFFF;
+  box-shadow:0 1px 1px rgba(20,33,58,.05), 0 28px 46px -22px rgba(24,63,112,.8)}
+.node.hero .ic{width:56px;height:56px;background:rgba(255,255,255,.14);color:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(255,255,255,.24)}
+.node.hero .ic svg{width:26px;height:26px}
+.node.hero .nm{font-size:40px}
+.node.hero .sb{color:rgba(255,255,255,.78)}
+.node.real{--c:var(--real)}
+.node.real .ic{background:var(--real-tint);color:var(--real);box-shadow:inset 0 0 0 1px rgba(138,90,18,.16)}
+.node.real .nm{font-size:26px}
+
+.pill{display:inline-flex;align-items:center;gap:12px;height:54px;padding:0 24px 0 9px;border-radius:999px;white-space:nowrap;
+  background:linear-gradient(180deg,#1F2E4B,#121C31);color:#FFFFFF;
+  box-shadow:0 1px 1px rgba(20,33,58,.1), 0 18px 32px -16px rgba(20,33,58,.7);
+  transition:transform .18s, opacity .2s;--c:var(--ink)}
+.pill:hover{transform:translateY(-2px)}
+.pill .ic{width:38px;height:38px;margin:0;background:rgba(255,255,255,.12);color:#FFFFFF;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+.pill .ic svg{width:20px;height:20px}
+.pill .nm{font-size:29px}
+.pill .sb{margin:0;font-size:13px;color:rgba(255,255,255,.66);align-self:center;padding-top:4px}
+
+.badge{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--paper);font-size:22px;font-weight:600;line-height:1;box-shadow:0 6px 14px -8px rgba(20,33,58,.35);transition:transform .15s}
 .badge:hover{transform:scale(1.08)}
 .badge-neq{border:1.5px solid var(--ink-3);color:var(--plano);--c:var(--plano)}
 .badge-id{border:1.5px dashed var(--lazo);color:var(--lazo);--c:var(--lazo)}
 
-/* Tarjetas de categoría */
-.cat{background:var(--paper);border-radius:18px;box-shadow:0 14px 28px -20px rgba(20,33,58,.45);transition:opacity .2s}
-.cat-voz{border:1.5px solid var(--voz);--c:var(--voz);--t:var(--voz-tint);padding:12px 16px;display:flex;flex-direction:column;gap:9px}
-.cat-tm{border:1px solid var(--edge);display:grid;grid-template-columns:1fr 1fr}
+/* Tarjetas de categoría: contenido centrado */
+.cat{background:linear-gradient(180deg,#FFFFFF,#FAFBFD);border-radius:20px;border:1px solid var(--card-edge);box-shadow:var(--shadow);transition:opacity .2s}
+.cat-voz{border-color:rgba(31,95,166,.32);--c:var(--voz);--t:var(--voz-tint);padding:13px 18px 15px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.cat-tm{display:grid;grid-template-columns:1fr 1fr}
 .cat-tm::after{content:"";position:absolute;top:0;bottom:0;left:calc(50% - 1px);width:2px;background:var(--line);pointer-events:none}
-.half{padding:12px 16px;display:flex;flex-direction:column;gap:9px}
-.cat-hist{border:1px solid var(--edge);padding:12px 16px 14px;display:flex;flex-direction:column;gap:10px;--c:var(--ink);--t:var(--neutral-tint)}
+.half{padding:13px 18px 15px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.cat-hist{padding:14px 20px 16px;display:flex;flex-direction:column;align-items:center;gap:11px;--c:var(--ink);--t:var(--neutral-tint)}
 .c-tiempo{--c:var(--tiempo);--t:var(--tiempo-tint)}
 .c-modo{--c:var(--modo);--t:var(--modo-tint)}
-.cat-head{display:flex;align-items:baseline;gap:10px;align-self:flex-start}
+.cat-head{display:inline-flex;align-items:baseline;gap:10px;white-space:nowrap}
 .cat-name{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--c)}
 .cat-name svg{width:17px;height:17px;transform:translateY(2px)}
-.cat-q{font-family:var(--serif);font-style:italic;font-size:19px;color:var(--ink-2)}
+.cat-q{font-family:var(--serif);font-style:italic;font-size:20px;color:var(--ink-2)}
 .cat-head:hover .cat-name{text-decoration:underline;text-underline-offset:3px}
-.hist-head{display:flex;align-items:center;gap:12px;align-self:flex-start}
-.hist-head .ic{width:38px;height:38px;border-radius:11px;background:var(--neutral-tint);color:var(--ink)}
-.hist-head .ic svg{width:21px;height:21px}
-.hist-head .nm{font-size:26px}
-.hist-head .sb{margin-top:3px}
+.hist-head{display:inline-flex;align-items:center;gap:11px;white-space:nowrap}
+.hist-head .ic{width:34px;height:34px;margin:0;background:var(--neutral-tint);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(20,33,58,.08)}
+.hist-head .ic svg{width:19px;height:19px}
+.hist-head .nm{font-size:29px}
+.hist-head .sb{margin:0;padding-top:5px}
 .hist-head:hover .nm{text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1px}
-.chips{display:flex;flex-wrap:nowrap;gap:6px}
-.chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:var(--t);color:var(--c);font-size:13.5px;font-weight:600;white-space:nowrap;transition:background .15s,color .15s,opacity .2s}
+.chips{display:flex;justify-content:center;flex-wrap:nowrap;gap:6px}
+.chip{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:31px;padding:0 13px;border-radius:999px;
+  background:var(--t);color:var(--c);font-size:13.5px;font-weight:600;white-space:nowrap;
+  box-shadow:inset 0 0 0 1px rgba(20,33,58,.05);transition:background .15s,color .15s,opacity .2s}
 .chip:hover{background:var(--c);color:#FFFFFF}
 .chip svg{width:15px;height:15px}
 .lbl{font-family:var(--serif);font-style:italic;font-size:18px;color:var(--ink-3);text-align:center;pointer-events:none}
 .src{font-size:12.5px;color:var(--ink-3)}
 
 /* Enfoque: al abrir una ficha, lo no relacionado se atenúa */
-.stage.focus .dim{opacity:.28}
+.stage.focus .dim{opacity:.26}
 .is-active{outline:3px solid var(--c, var(--voz));outline-offset:4px}
 .is-rel{outline:2px dashed var(--c, var(--voz));outline-offset:4px}
 
@@ -283,6 +304,7 @@ html.is-fs .stage{border-radius:0;box-shadow:none}
   <div class="page p2"></div>
   <div class="page p1"></div>
   <div class="fic"></div>
+  <div class="glow" style="left:590px;top:292px;width:420px;height:280px"></div>
 
   <svg class="lines" viewBox="0 0 1600 900" aria-hidden="true">
     <defs>
@@ -290,56 +312,55 @@ html.is-fs .stage{border-radius:0;box-shadow:none}
       <marker id="a-lazo" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="13" markerHeight="13" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.5 L11 6 L1 10.5 Z" fill="#2E7A48"/></marker>
     </defs>
     <!-- eje de la tríada -->
-    <path d="M800 236 V636" stroke="#A7B1C2" stroke-width="2" fill="none"/>
+    <path d="M800 193 V660" stroke="#A7B1C2" stroke-width="2" fill="none"/>
     <!-- la narración y sus dos protagonistas -->
-    <path d="M670 209 H440 Q408 209 408 241 V384" stroke="#A7B1C2" stroke-width="2" fill="none"/>
-    <path d="M930 209 H1160 Q1192 209 1192 241 V384" stroke="#A7B1C2" stroke-width="2" fill="none"/>
-    <circle cx="408" cy="384" r="3.5" fill="#A7B1C2"/>
-    <circle cx="1192" cy="384" r="3.5" fill="#A7B1C2"/>
+    <path d="M800 193 H440 Q408 193 408 225 V364" stroke="#A7B1C2" stroke-width="2" fill="none"/>
+    <path d="M800 193 H1160 Q1192 193 1192 225 V364" stroke="#A7B1C2" stroke-width="2" fill="none"/>
+    <circle cx="408" cy="364" r="3.5" fill="#A7B1C2"/>
+    <circle cx="1192" cy="364" r="3.5" fill="#A7B1C2"/>
     <!-- narrador → relato → narratario -->
-    <path d="M528 432 H644" stroke="#14213A" stroke-width="3" fill="none" marker-end="url(#a-ink)"/>
-    <path d="M952 432 H1068" stroke="#14213A" stroke-width="3" fill="none" marker-end="url(#a-ink)"/>
+    <path d="M519 432 H669" stroke="#14213A" stroke-width="3" fill="none" marker-end="url(#a-ink)"/>
+    <path d="M931 432 H1081" stroke="#14213A" stroke-width="3" fill="none" marker-end="url(#a-ink)"/>
     <!-- frontera entre planos -->
-    <path d="M216 432 H288" stroke="#7C879B" stroke-width="1.8" stroke-dasharray="5 6" fill="none"/>
-    <path d="M1384 432 H1314" stroke="#2E7A48" stroke-width="2" stroke-dasharray="7 6" fill="none" marker-end="url(#a-lazo)"/>
+    <path d="M220 432 H299" stroke="#7C879B" stroke-width="1.8" stroke-dasharray="5 6" fill="none"/>
+    <path d="M1380 432 H1303" stroke="#2E7A48" stroke-width="2" stroke-dasharray="7 6" fill="none" marker-end="url(#a-lazo)"/>
   </svg>
 
   <!-- Encabezado -->
   <div class="el eyebrow" style="left:60px;top:40px">Gérard Genette · <i>Figuras III</i></div>
   <h1 class="el title" style="left:58px;top:62px">Componentes de la <em>narración</em></h1>
-  <div class="el tools" style="left:1100px;top:42px;width:440px">
-    <button type="button" class="fs" id="fsBtn" aria-pressed="false">
+  <div class="el tools" style="left:1040px;top:52px;width:500px">
+    <span class="hint">Pulsa un elemento para abrir su ficha</span>
+    <button type="button" class="fs" id="fsBtn" aria-pressed="false" aria-label="Pantalla completa" title="Pantalla completa (F)">
       <svg id="fsIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-      <span id="fsLabel">Pantalla completa</span>
     </button>
   </div>
-  <div class="el hint" style="left:1100px;top:96px;width:440px">Pulsa un elemento para abrir su ficha · <kbd>F</kbd> pantalla completa</div>
 
   <!-- Etiquetas de los planos -->
   <button type="button" class="el tab" style="left:290px;top:124px" data-k="obra" aria-haspopup="dialog"><b>Plano real</b><span>la obra escrita</span></button>
-  <button type="button" class="el plano" style="left:292px;top:774px" data-k="planoImag" aria-haspopup="dialog"><b>Plano imaginario</b><span>la ficción</span></button>
+  <button type="button" class="el plano" style="left:292px;top:772px" data-k="planoImag" aria-haspopup="dialog"><b>Plano imaginario</b><span>la ficción</span></button>
 
   <!-- Fuera del libro -->
-  <button type="button" class="el person" style="left:40px;top:358px;width:176px;height:148px" data-k="autor" aria-haspopup="dialog">
+  <button type="button" class="el node real" style="left:36px;top:360px;width:184px;height:144px" data-k="autor" aria-haspopup="dialog">
     <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg></span>
     <span class="nm">Autor(a)</span><span class="sb">escribe y elige</span>
   </button>
   <button type="button" class="el badge badge-neq" style="left:231px;top:413px" data-k="noEq" aria-haspopup="dialog" aria-label="Autor y narrador no son lo mismo">≠</button>
 
-  <button type="button" class="el person" style="left:1384px;top:358px;width:176px;height:148px" data-k="lector" aria-haspopup="dialog">
+  <button type="button" class="el node real" style="left:1380px;top:360px;width:184px;height:144px" data-k="lector" aria-haspopup="dialog">
     <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="15" r="4"/><circle cx="18" cy="15" r="4"/><path d="M14 15a2 2 0 0 0-4 0"/><path d="M2.5 13 5 7c.7-1.3 1.4-2 3-2"/><path d="M21.5 13 19 7c-.7-1.3-1.5-2-3-2"/></svg></span>
     <span class="nm">Lector(a) real</span><span class="sb">lee la obra</span>
   </button>
   <button type="button" class="el badge badge-id" style="left:1331px;top:413px" data-k="ident" aria-haspopup="dialog" aria-label="Identificación del lector real con el narratario">≈</button>
 
   <!-- Narración -->
-  <button type="button" class="el node dark" style="left:670px;top:182px;width:260px;height:54px" data-k="narracion" aria-haspopup="dialog">
+  <button type="button" class="el pill cx" style="left:800px;top:166px" data-k="narracion" aria-haspopup="dialog">
     <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 10v4M7 6v12M11 3v18M15 7v10M19 10v4"/></svg></span>
-    <span><span class="nm">Narración</span><span class="sb">el acto narrativo</span></span>
+    <span class="nm">Narración</span><span class="sb">el acto narrativo</span>
   </button>
 
   <!-- Voz -->
-  <div class="el cat cat-voz" style="left:556px;top:262px;width:488px">
+  <div class="el cat cat-voz cx" style="left:800px;top:240px">
     <button type="button" class="cat-head" data-k="voz" aria-haspopup="dialog">
       <span class="cat-name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/></svg>Voz</span>
       <span class="cat-q">¿quién habla?</span>
@@ -353,25 +374,25 @@ html.is-fs .stage{border-radius:0;box-shadow:none}
   </div>
 
   <!-- Narrador → Relato → Narratario -->
-  <button type="button" class="el node" style="left:290px;top:384px;width:236px;height:96px" data-k="narrador" aria-haspopup="dialog">
+  <button type="button" class="el node cx" style="left:408px;top:364px;width:214px;height:136px" data-k="narrador" aria-haspopup="dialog">
     <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></span>
-    <span><span class="nm">Narrador(a)</span><span class="sb">instancia que cuenta</span></span>
+    <span class="nm">Narrador(a)</span><span class="sb">instancia que cuenta</span>
   </button>
-  <div class="el lbl" style="left:486px;top:398px;width:200px">produce</div>
+  <div class="el lbl cx" style="left:594px;top:398px">produce</div>
 
-  <button type="button" class="el node hero" style="left:650px;top:380px;width:300px;height:104px" data-k="relato" aria-haspopup="dialog">
+  <button type="button" class="el node hero cx" style="left:800px;top:356px;width:250px;height:152px" data-k="relato" aria-haspopup="dialog">
     <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z"/></svg></span>
-    <span><span class="nm">Relato</span><span class="sb">el texto narrativo</span></span>
+    <span class="nm">Relato</span><span class="sb">el texto narrativo</span>
   </button>
-  <div class="el lbl" style="left:910px;top:398px;width:200px">se dirige a</div>
+  <div class="el lbl cx" style="left:1006px;top:398px">se dirige a</div>
 
-  <button type="button" class="el node" style="left:1074px;top:384px;width:236px;height:96px" data-k="narratario" aria-haspopup="dialog">
+  <button type="button" class="el node cx" style="left:1192px;top:364px;width:214px;height:136px" data-k="narratario" aria-haspopup="dialog">
     <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0"/><path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4"/></svg></span>
-    <span><span class="nm">Narratario(a)</span><span class="sb">destinatario del relato</span></span>
+    <span class="nm">Narratario(a)</span><span class="sb">destinatario del relato</span>
   </button>
 
   <!-- Tiempo y Modo -->
-  <div class="el cat cat-tm" style="left:520px;top:518px;width:560px">
+  <div class="el cat cat-tm cx" style="left:800px;top:528px;width:560px">
     <div class="half c-tiempo">
       <button type="button" class="cat-head" data-k="tiempo" aria-haspopup="dialog">
         <span class="cat-name"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3.5 2"/></svg>Tiempo</span>
@@ -396,10 +417,10 @@ html.is-fs .stage{border-radius:0;box-shadow:none}
   </div>
 
   <!-- Historia -->
-  <div class="el cat cat-hist" style="left:580px;top:636px;width:440px">
+  <div class="el cat cat-hist cx" style="left:800px;top:660px">
     <button type="button" class="hist-head" data-k="historia" aria-haspopup="dialog">
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19"/><path d="M12 2.5a14.5 14.5 0 0 1 3.8 9.5 14.5 14.5 0 0 1-3.8 9.5 14.5 14.5 0 0 1-3.8-9.5A14.5 14.5 0 0 1 12 2.5z"/></svg></span>
-      <span><span class="nm">Historia</span><span class="sb">lo contado · la diégesis</span></span>
+      <span class="nm">Historia</span><span class="sb">lo contado · la diégesis</span>
     </button>
     <div class="chips">
       <button type="button" class="chip" data-k="acontec" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18"/><circle cx="6" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="18" cy="12" r="2" fill="currentColor"/></svg>Acontecimientos</button>
@@ -802,7 +823,6 @@ function toast(msg){
 }
 
 const fsBtn = document.getElementById("fsBtn");
-const fsLabel = document.getElementById("fsLabel");
 const fsIcon = document.getElementById("fsIcon");
 const ICON_IN = '<path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/>';
 const ICON_OUT = '<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>';
@@ -821,7 +841,8 @@ function toggleFS(){
 function onFS(){
   const on = !!fsElement();
   document.documentElement.classList.toggle("is-fs", on);
-  fsLabel.textContent = on ? "Salir de pantalla completa" : "Pantalla completa";
+  fsBtn.setAttribute("aria-label", on ? "Salir de pantalla completa" : "Pantalla completa");
+  fsBtn.title = on ? "Salir de pantalla completa (Esc)" : "Pantalla completa (F)";
   fsIcon.innerHTML = on ? ICON_OUT : ICON_IN;
   fsBtn.setAttribute("aria-pressed", String(on));
   requestAnimationFrame(fit);
